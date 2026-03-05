@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Re-appear Exam Fee Calculator</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 30px;
+      width: 100%;
+      max-width: 480px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .header h1 {
+      font-size: 22px;
+      color: #1a1a2e;
+      font-weight: 700;
+    }
+
+    .header p {
+      color: #666;
+      font-size: 13px;
+      margin-top: 5px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 6px;
+      margin-top: 18px;
+    }
+
+    select, input[type=number] {
+      width: 100%;
+      padding: 11px 14px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 14px;
+      color: #333;
+      transition: border-color 0.2s;
+      background: #fafafa;
+    }
+
+    select:focus, input[type=number]:focus {
+      outline: none;
+      border-color: #0f3460;
+      background: white;
+    }
+
+    .row2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .field-group { display: flex; flex-direction: column; }
+
+    .hint { font-size: 11px; color: #999; margin-top: 4px; }
+
+    .btn {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #0f3460, #1a1a2e);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 24px;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+
+    .btn:hover { opacity: 0.92; transform: translateY(-1px); }
+    .btn:active { transform: translateY(0); }
+
+    .result-box {
+      display: none;
+      margin-top: 24px;
+      background: linear-gradient(135deg, #0f3460, #1a1a2e);
+      border-radius: 12px;
+      padding: 22px;
+      text-align: center;
+      color: white;
+    }
+
+    .result-box .label { font-size: 13px; opacity: 0.8; }
+    .result-box .amount { font-size: 42px; font-weight: 800; margin: 8px 0; }
+    .result-box .rupee { font-size: 28px; }
+
+    .error-msg { color: #e53935; font-size: 12px; margin-top: 6px; display: none; }
+
+    #practical-section { transition: opacity 0.3s; }
+    #practical-section.disabled { opacity: 0.4; pointer-events: none; }
+
+    .loading {
+      text-align: center;
+      color: #888;
+      padding: 20px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+<div class="card">
+  <div class="header">
+    <h1>📋 Re-appear Exam Fee Calculator</h1>
+    <p>Apni Exam, Fail Theories, Fail Practicals No.s select kare aur Total Fee to Pay check kare.</p>
+  </div>
+
+  <label for="classSelect">📚 Class / Exam Select Karein</label>
+  <div id="loadingMsg" class="loading">⏳ Loading classes...</div>
+  <select id="classSelect" onchange="onClassChange()" style="display:none">
+    <option value="">-- Class chunein --</option>
+  </select>
+
+  <div class="row2" style="margin-top:4px;">
+    <div class="field-group">
+      <label for="thFail">📝 Theory Fail</label>
+      <input type="number" id="thFail" min="0" max="8" value="0" oninput="validateInputs()">
+      <span class="hint">Max: 8 Theories</span>
+      <span class="error-msg" id="thError">Max 8 allowed</span>
+    </div>
+    <div class="field-group" id="practical-section">
+      <label for="prFail">🔬 Practical Fail</label>
+      <input type="number" id="prFail" min="0" max="5" value="0" oninput="validateInputs()">
+      <span class="hint">Max: 5 Practicals</span>
+      <span class="error-msg" id="prError">Max 5 allowed</span>
+    </div>
+  </div>
+
+  <button class="btn" onclick="calculate()">🧮 Calculate Total Fee</button>
+
+  <div class="result-box" id="resultBox">
+    <div class="label">Aapki Re-Exam Total Fee is</div>
+    <div class="amount"><span class="rupee">₹</span><span id="totalAmt">0</span></div>
+  </div>
+</div>
+
+<script>
+  // ⚙️ SETTINGS
+  const SHEET_ID = "1tRS6fIUsYcFRCk4CJgNpAMUMsjclsWbcTqBf-7siz4Y";
+  const SHEET_TAB = "Classwise Fee";
+  const FIXED_CHARGE = 75;
+  const MAX_TH = 8;
+  const MAX_PR = 5;
+
+  let classData = [];
+
+  // Google Sheets public CSV fetch
+  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_TAB)}&range=B:D`;
+
+  fetch(url)
+    .then(r => r.text())
+    .then(csv => {
+      const rows = csv.trim().split('\n').slice(1); // header skip
+      const sel = document.getElementById('classSelect');
+
+      rows.forEach(row => {
+        const cols = row.split(',').map(c => c.replace(/"/g, '').trim());
+        const name = cols[0];
+        const thFee = parseFloat(cols[1]) || 0;
+        const prFee = parseFloat(cols[2]) || 0;
+
+        if (!name || name === '') return;
+
+        classData.push({ name, thFee, prFee, hasPractical: prFee > 0 });
+
+        const opt = document.createElement('option');
+        opt.value = classData.length - 1;
+        opt.textContent = name;
+        sel.appendChild(opt);
+      });
+
+      document.getElementById('loadingMsg').style.display = 'none';
+      sel.style.display = 'block';
+    })
+    .catch(() => {
+      document.getElementById('loadingMsg').textContent = '❌ Data load nahi hua. Page refresh karein.';
+    });
+
+  let selectedClass = null;
+
+  function onClassChange() {
+    const idx = document.getElementById('classSelect').value;
+    if (idx === "") { selectedClass = null; return; }
+    selectedClass = classData[idx];
+
+    const prSec = document.getElementById('practical-section');
+    if (selectedClass.hasPractical) {
+      prSec.classList.remove('disabled');
+      document.getElementById('prFail').value = 0;
+    } else {
+      prSec.classList.add('disabled');
+      document.getElementById('prFail').value = 0;
+    }
+
+    document.getElementById('resultBox').style.display = 'none';
+  }
+
+  function validateInputs() {
+    const th = parseInt(document.getElementById('thFail').value) || 0;
+    const pr = parseInt(document.getElementById('prFail').value) || 0;
+    document.getElementById('thError').style.display = th > MAX_TH ? 'block' : 'none';
+    document.getElementById('prError').style.display = pr > MAX_PR ? 'block' : 'none';
+  }
+
+  function calculate() {
+    if (!selectedClass) { alert("Pehle apni class select karein!"); return; }
+
+    const th = parseInt(document.getElementById('thFail').value) || 0;
+    const pr = selectedClass.hasPractical ? (parseInt(document.getElementById('prFail').value) || 0) : 0;
+
+    if (th > MAX_TH || pr > MAX_PR) { alert("Fail subjects ki sankhya sahi karein!"); return; }
+    if (th === 0 && pr === 0) { alert("Kam se kam 1 theory ya practical fail hona chahiye!"); return; }
+
+    const total = (th * selectedClass.thFee) + (pr * selectedClass.prFee) + FIXED_CHARGE;
+    document.getElementById('totalAmt').textContent = total;
+    document.getElementById('resultBox').style.display = 'block';
+    document.getElementById('resultBox').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+</script>
+</body>
+</html>
