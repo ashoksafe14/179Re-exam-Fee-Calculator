@@ -110,7 +110,7 @@
 
     .footer {
       color: rgba(255,255,255,0.15);
-      font-size: 11px;
+      font-size: 13px;
       margin-top: 16px;
       text-align: center;
       letter-spacing: 1px;
@@ -127,7 +127,7 @@
   <label for="classSelect">📚 Class / Exam Select Karein</label>
   <div id="loadingMsg" class="loading">⏳ Loading classes...</div>
   <select id="classSelect" onchange="onClassChange()" style="display:none">
-    <option value="">-- Class chunein --</option>
+    <option value="">-- Select your exam --</option>
   </select>
 
   <div class="row2" style="margin-top:4px;">
@@ -233,7 +233,7 @@
     const pr = selectedClass.hasPractical ? (parseInt(document.getElementById('prFail').value) || 0) : 0;
 
     if (th > MAX_TH || pr > MAX_PR) { alert("Fail subjects ki sankhya sahi karein!"); return; }
-    if (th === 0 && pr === 0) { alert("Kam se kam 1 theory ya practical fail hona chahiye!"); return; }
+    if (th === 0 && pr === 0) { alert("Please select your back Theory/s*, Practical/s*."); return; }
 
     const total = (th * selectedClass.thFee) + (pr * selectedClass.prFee) + FIXED_CHARGE;
     document.getElementById('totalAmt').textContent = total;
