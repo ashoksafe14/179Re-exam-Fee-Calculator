@@ -15,6 +15,7 @@
       align-items: center;
       justify-content: center;
       padding: 20px;
+      flex-direction: column;
     }
 
     .card {
@@ -26,22 +27,11 @@
       box-shadow: 0 20px 60px rgba(0,0,0,0.4);
     }
 
-    .header {
-      text-align: center;
-      margin-bottom: 28px;
-    }
+    .header { text-align: center; margin-bottom: 28px; }
 
-    .header h1 {
-      font-size: 22px;
-      color: #1a1a2e;
-      font-weight: 700;
-    }
+    .header h1 { font-size: 22px; color: #1a1a2e; font-weight: 700; }
 
-    .header p {
-      color: #666;
-      font-size: 13px;
-      margin-top: 5px;
-    }
+    .header p { color: #666; font-size: 13px; margin-top: 5px; }
 
     label {
       display: block;
@@ -69,11 +59,12 @@
       background: white;
     }
 
-    .row2 {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 14px;
-    }
+    /* Hide number input arrows */
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    input[type=number] { -moz-appearance: textfield; }
+
+    .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 
     .field-group { display: flex; flex-direction: column; }
 
@@ -115,11 +106,14 @@
     #practical-section { transition: opacity 0.3s; }
     #practical-section.disabled { opacity: 0.4; pointer-events: none; }
 
-    .loading {
+    .loading { text-align: center; color: #888; padding: 20px; font-size: 14px; }
+
+    .footer {
+      color: rgba(255,255,255,0.15);
+      font-size: 11px;
+      margin-top: 16px;
       text-align: center;
-      color: #888;
-      padding: 20px;
-      font-size: 14px;
+      letter-spacing: 1px;
     }
   </style>
 </head>
@@ -139,13 +133,13 @@
   <div class="row2" style="margin-top:4px;">
     <div class="field-group">
       <label for="thFail">📝 Theory Fail</label>
-      <input type="number" id="thFail" min="0" max="8" value="0" oninput="validateInputs()">
+      <input type="number" id="thFail" min="0" max="8" placeholder="0" oninput="validateInputs(); resetResult();">
       <span class="hint">Max: 8 Theories</span>
       <span class="error-msg" id="thError">Max 8 allowed</span>
     </div>
     <div class="field-group" id="practical-section">
       <label for="prFail">🔬 Practical Fail</label>
-      <input type="number" id="prFail" min="0" max="5" value="0" oninput="validateInputs()">
+      <input type="number" id="prFail" min="0" max="5" placeholder="0" oninput="validateInputs(); resetResult();">
       <span class="hint">Max: 5 Practicals</span>
       <span class="error-msg" id="prError">Max 5 allowed</span>
     </div>
@@ -159,8 +153,9 @@
   </div>
 </div>
 
+<div class="footer">By &nbsp; @$)-(●|&lt;&nbsp;&nbsp;$)-(@₹/^\@</div>
+
 <script>
-  // ⚙️ SETTINGS
   const SHEET_ID = "1tRS6fIUsYcFRCk4CJgNpAMUMsjclsWbcTqBf-7siz4Y";
   const SHEET_TAB = "Classwise Fee";
   const FIXED_CHARGE = 75;
@@ -169,13 +164,12 @@
 
   let classData = [];
 
-  // Google Sheets public CSV fetch
   const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_TAB)}&range=B:D`;
 
   fetch(url)
     .then(r => r.text())
     .then(csv => {
-      const rows = csv.trim().split('\n').slice(1); // header skip
+      const rows = csv.trim().split('\n').slice(1);
       const sel = document.getElementById('classSelect');
 
       rows.forEach(row => {
@@ -211,12 +205,17 @@
     const prSec = document.getElementById('practical-section');
     if (selectedClass.hasPractical) {
       prSec.classList.remove('disabled');
-      document.getElementById('prFail').value = 0;
     } else {
       prSec.classList.add('disabled');
-      document.getElementById('prFail').value = 0;
     }
 
+    // Reset inputs and result
+    document.getElementById('thFail').value = '';
+    document.getElementById('prFail').value = '';
+    resetResult();
+  }
+
+  function resetResult() {
     document.getElementById('resultBox').style.display = 'none';
   }
 
@@ -228,7 +227,7 @@
   }
 
   function calculate() {
-    if (!selectedClass) { alert("Pehle apni class select karein!"); return; }
+    if (!selectedClass) { alert("Pehle apni Exam select karein!"); return; }
 
     const th = parseInt(document.getElementById('thFail').value) || 0;
     const pr = selectedClass.hasPractical ? (parseInt(document.getElementById('prFail').value) || 0) : 0;
