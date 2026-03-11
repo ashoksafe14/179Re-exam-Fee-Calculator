@@ -233,7 +233,6 @@
         const prFee = parseFloat(cols[2]) || 0;
 
         if (!name || name === '') return;
-        if (thFee === 0 && prFee === 0) return; // Dono zero ho toh skip karo
 
         classData.push({ name, thFee, prFee, hasPractical: prFee > 0 });
 
