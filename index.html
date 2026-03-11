@@ -115,6 +115,51 @@
       text-align: center;
       letter-spacing: 1px;
     }
+
+    /* Custom Alert */
+    .overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 999;
+      align-items: center;
+      justify-content: center;
+    }
+    .overlay.show { display: flex; }
+    .alert-box {
+      background: white;
+      border-radius: 14px;
+      padding: 24px 28px;
+      max-width: 320px;
+      width: 90%;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+      text-align: center;
+    }
+    .alert-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #888;
+      letter-spacing: 1px;
+      margin-bottom: 12px;
+    }
+    .alert-msg {
+      font-size: 14px;
+      color: #333;
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+    .alert-btn {
+      background: linear-gradient(135deg, #0f3460, #1a1a2e);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 32px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -154,6 +199,15 @@
 </div>
 
 <div class="footer">By &nbsp; @$)-(●|&lt;&nbsp;&nbsp;$)-(@₹/^\@</div>
+
+<!-- Custom Alert -->
+<div class="overlay" id="alertOverlay">
+  <div class="alert-box">
+    <div class="alert-title">@$)-(●|&lt; &nbsp; $)-(@₹/^\@</div>
+    <div class="alert-msg" id="alertMsg"></div>
+    <button class="alert-btn" onclick="closeAlert()">OK</button>
+  </div>
+</div>
 
 <script>
   const SHEET_ID = "1tRS6fIUsYcFRCk4CJgNpAMUMsjclsWbcTqBf-7siz4Y";
@@ -226,14 +280,23 @@
     document.getElementById('prError').style.display = pr > MAX_PR ? 'block' : 'none';
   }
 
+  function showAlert(msg) {
+    document.getElementById('alertMsg').textContent = msg;
+    document.getElementById('alertOverlay').classList.add('show');
+  }
+
+  function closeAlert() {
+    document.getElementById('alertOverlay').classList.remove('show');
+  }
+
   function calculate() {
-    if (!selectedClass) { alert("Pehle apni Exam select karein!"); return; }
+    if (!selectedClass) { showAlert("Pehle apni Exam select karein!"); return; }
 
     const th = parseInt(document.getElementById('thFail').value) || 0;
     const pr = selectedClass.hasPractical ? (parseInt(document.getElementById('prFail').value) || 0) : 0;
 
-    if (th > MAX_TH || pr > MAX_PR) { alert("Fail subjects ki sankhya sahi karein!"); return; }
-    if (th === 0 && pr === 0) { alert("Please select your back Theory/s*, Practical/s*."); return; }
+    if (th > MAX_TH || pr > MAX_PR) { showAlert("Fail subjects ki sankhya sahi karein!"); return; }
+    if (th === 0 && pr === 0) { showAlert("Please select your back Theory/s*, Practical/s*."); return; }
 
     const total = (th * selectedClass.thFee) + (pr * selectedClass.prFee) + FIXED_CHARGE;
     document.getElementById('totalAmt').textContent = total;
